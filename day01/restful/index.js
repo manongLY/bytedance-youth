@@ -2,7 +2,7 @@ const Koa = require('koa')
 const app = new Koa()
 
 // 注册路由
-const config = require('./conf')
+const config = require('./config')
 const {loadModel} = require('./framework/loader.js')
 loadModel(config)(app)
 
