@@ -21,13 +21,10 @@ const spawn = async(...args) =>{
     }
     return new Promise(resolve =>{
         const proc = spawn(...args)
-        console.log('============')
         // 输出流 子进程 合并到主进程
         proc.stdout.pipe(process.stdout)
         proc.stderr.pipe(process.stderr)
         proc.on('close', ()=>{
-            console.log('---close---')
-
             // 异常处理，输出
             resolve()
         })

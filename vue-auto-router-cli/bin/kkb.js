@@ -6,9 +6,9 @@ program.command('init <name>')
     .description('init project')
     .action(require('../lib/init.js'))
     // views/中增加一个文件 kkb refresh
-// program .command('refresh') 
-//     .description('refresh routers...') 
-//     .action(require('../lib/refresh'))
+program.command('refresh') 
+    .description('refresh routers...') 
+    .action(require('../lib/refresh'))
 program.parse(process.argv)
 
 
