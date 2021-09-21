@@ -1,0 +1,18 @@
+{
+  "name": "lint",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint /src"
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "yarn lint"
+    }
+  },
+  "devDependencies": {
+    "eslint": "^7.32.0",
+    "husky": "^7.0.2"
+  }
+}
