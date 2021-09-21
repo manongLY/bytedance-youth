@@ -3,16 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
-  "scripts": {
-    "lint": "eslint /src"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "yarn lint"
-    }
-  },
   "devDependencies": {
-    "eslint": "^7.32.0",
     "husky": "^7.0.2"
+  },
+  "scripts": {
+    "lint": "eslint src",
+    "prepare": "cd ../.. && husky install"
   }
 }
