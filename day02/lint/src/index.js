@@ -1,2 +1,2 @@
 const a = "name";
-console.log(name)
+console.log(a)
