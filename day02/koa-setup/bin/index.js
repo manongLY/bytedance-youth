@@ -21,7 +21,7 @@ const config = createConfig(answer)
 console.log('config:',config)
 
 // 1、创建文件夹
-// fs.mkdirSync(getRootPath());
+fs.mkdirSync(getRootPath());
 // 2、创建index.js
 fs.writeFileSync(getRootPath() + "/index.js",createIndexTemplate(config))
 // 3、创建 package.json
