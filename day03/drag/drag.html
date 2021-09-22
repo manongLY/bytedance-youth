@@ -6,7 +6,6 @@
         let ex = 0,ey = 0;
         let move = e=>{
             let [dx,dy] = [e.clientX - x0,e.clientY - y0];
-            console.log('------:',dx)
             ele.style.transform = `translate(${ex + dx}px,${ey + dy}px)`;
         }
 
