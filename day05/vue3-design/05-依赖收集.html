@@ -1,0 +1,207 @@
+<div id="app">
+    {{title}}
+</div>
+<!-- 哪些响应式数据和它们相关联的更新函数之间建立依赖关系 -->
+<script>
+    const Vue = {
+        // 扩展性
+        createRenderer({querySelector,insert}){
+            // 返回渲染器
+            return {
+                // 扩展 createApp
+                createApp(options){
+                    return {
+                        // 挂载的过程
+                        mount(selector){
+                            console.log('mount')
+                            // 1、找到宿主元素
+                            const parent = querySelector(selector)
+                            // 2、渲染页面
+                            if(!options.render){
+                                // 2.1、 处理 template：编译
+                                options.render = this.compile(parent.innerHTML)
+                            }
+
+                            // 兼容 vue3 的 setup 和其他选项
+                            if(options.setup){
+                                this.setupState = options.setup()
+                            }
+                            if(options.data){
+                                this.data = options.data()
+                            }
+                            // app.xxx
+                            const proxy = new Proxy(this,{
+                                get(target,key){
+                                    console.log('proxy get')
+                                    // 先从setup中取，如果取不到再从data中取
+                                    if(target.setupState && key in target.setupState){
+                                        return target.setupState[key]
+                                    }else{
+                                        // 还有 porps等
+                                        return target[key]
+                                    }
+                                },
+                                set(target,key,val){
+                                    console.log('proxy set')
+                                    if(target.setupState && key in target.setupState){
+                                        target.setupState[key] = val
+                                    }else{
+                                        // 还有 porps等
+                                        target[key] = val
+                                    }
+                                }
+                            })
+
+
+                            // 更新的时候需要重新 render
+                            this.update = effect(()=>{
+                                // 2.2、 用户直接编写 render
+                                const el = options.render.call(proxy)
+                                // 3、追加到宿主
+                                parent.innerHTML = ''
+                                parent.appendChild(el)
+                            })
+                        },
+                        compile(template){
+                            // 返回一个 render 函数
+                            // parse -> ast
+                            // ast -> render
+                            return function render(){
+                                const h3 = document.createElement('h3')
+                                h3.textContent = this.title
+                                return h3
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        createApp(options){
+            const renderer = Vue.createRenderer({
+                querySelector(sel){
+                    return document.querySelector(sel)
+                },
+                insert(el,parent){
+                    parent.appendChild(el)
+                }
+            })
+            return renderer.createApp(options)
+        }
+    }
+</script>
+
+<script>
+    // 能够拦截用户对代理对象的访问
+    // 从而在值发生变化的时候做出响应式
+    function reactive(obj){
+        console.log('reactive')
+        // vue2 缺点：1、（性能）defineProperty(obj,{})
+        //              每次只能定义一个key，数据大了会慢
+        //            2、数组问题，需要单独写一套实现
+        //            3、动态属性新增删除 set/delete
+        // vue3 响应式基于Proxy 递归效率问题 
+        return new Proxy(obj,{
+            get(target,key){
+                console.log('get key:',key)
+                // 建立依赖关系 --- 订阅
+                track(target,key)
+                return target[key]
+            },
+            set(target,key,val){
+                console.log('set key:',key)
+                target[key] = val
+                // // 反射
+                // Reflect.set(target,key)
+
+                // 获取依赖管理 --- 发布
+                // 通知更新()
+                // app.update()
+                trigger(target,key)
+            }
+        })
+    }
+
+    // 任务 ---------------- 建立映射关系：依赖dep - 组件更新函数
+
+    // 为什么是数组  effect 时有可能嵌套effect
+    const effectStack = []
+    // 调用effect,先执行 fn
+    function effect (fn){
+        const eff = function(){
+            try {
+                effectStack.push(eff)
+                fn()
+            } finally {
+                effectStack.pop(eff)
+            }
+        }
+
+        // 立即执行一次
+        eff()
+        return eff
+    }
+    
+    // vue2: 组件有 watcher
+    // vue3: 创建 map 结构 {target:{ key: [数据更新update1(),update2()]}}
+    // const targetMap = new WeakMap() 官方是使用的这个
+    const targetMap = {}
+        // state:{
+        //     'title': []
+        // }
+    // }
+
+    // 建立target、key和 effectStack 中存储的副作用函数之间的关系
+    function track(target,key){
+        console.log('track-target:',target)
+        const effect = effectStack[effectStack.length -1]
+        // 判断target为key的对象存在不存在
+        let map = targetMap[target]
+        console.log('tarck-map:',map,targetMap[target])
+        if(!map){
+            // 首次get这个target
+            map = targetMap[target] = {}
+        }
+        console.log('tarck-map:',map)
+        let deps = map[key]
+        if(!deps){
+            deps = map[key] = []
+        }
+        if(deps.indexOf(effect) === -1){
+            deps.push(effect)
+        }
+    }
+
+    // 从targetMap中获取target,key对应的依赖函数并执行他们
+    function trigger(target,key){
+        console.log('trigger')
+        const map = targetMap[target]
+        if(map){
+            const deps = map[key]
+            if(deps){
+                deps.forEach(dep => dep())
+            }
+        }
+    }
+
+    const obj = reactive({foo: 'foo'})
+    effect(()=>{
+        // 触发响应式数据
+        console.log(obj.foo)
+    })
+    obj.foo = 'foo~~~~~'
+
+
+    const app = Vue.createApp({
+        setup(){
+            const state = reactive({
+                title: 'vue3 Hello'
+            })
+            setTimeout(() =>{
+                state.title = '5秒后变化了'
+            },5000)
+            return state
+        }
+    })
+    // 挂载
+    app.mount("#app")
+</script>
