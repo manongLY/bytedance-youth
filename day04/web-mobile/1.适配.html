@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- 不设置视口时 默认宽度980 -->
+    <!-- <meta name="viewport" content="width=device-width"> -->
+    <title>Document</title>
+    <style>
+        #box{
+            width: 200px;
+            height: 200px;
+            background-color: blue;
+        }
+    </style>
+    <script>
+        // 像素比 : 1px 的内容，放大到 devicePixelRatio px 显示
+        console.log(window.devicePixelRatio)
+        // 物理像素： 设备本身的像素
+        // css像素： css pixels
+        // 物理像素和css像素
+        // 因为物理像素和css像素不一致，所以一般使用js等比例控制，不使用 viewport
+        (function () {
+            var metaEl = document.createElement('meta');
+            var scale = devicePixelRatio;
+            metaEl.setAttribute('name', 'viewport');
+            metaEl.setAttribute('content', 'initial-scale=' + (1/scale) + ', maximum-scale=' + (1/scale) + ', minimum-scale=' + (1/scale) + ', user-scalable=no');
+            document.documentElement.firstElementChild.appendChild(metaEl);
+        })();
+
+    </script>
+</head>
+<body>
+    <div id="box"></div>
+</body>
+</html>
