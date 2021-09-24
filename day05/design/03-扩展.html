@@ -1,0 +1,104 @@
+<div id="app">
+    {{title}}
+</div>
+
+<script>
+    const Vue = {
+        // 扩展性
+        createRenderer({querySelector,insert}){
+            // 返回渲染器
+            return {
+                // 扩展 createApp
+                createApp(options){
+                    return {
+                        // 挂载的过程
+                        mount(selector){
+                            console.log('mount')
+                            // 1、找到宿主元素
+                            const parent = querySelector(selector)
+                            // 2、渲染页面
+                            if(!options.render){
+                                // 2.1、 处理 template：编译
+                                options.render = this.compile(parent.innerHTML)
+                            }
+
+                            // 兼容 vue3 的 setup 和其他选项
+                            if(options.setup){
+                                this.setupState = options.setup()
+                            }
+                            if(options.data){
+                                this.data = options.data()
+                            }
+                            // app.xxx
+                            const proxy = new Proxy(this,{
+                                get(target,key){
+                                    console.log('proxy get')
+                                    // 先从setup中取，如果取不到再从data中取
+                                    if(target.setupState && key in target.setupState){
+                                        return target.setupState[key]
+                                    }else{
+                                        // 还有 porps等
+                                        return target[key]
+                                    }
+                                },
+                                set(target,key,val){
+                                    console.log('proxy set')
+                                    if(target.setupState && key in target.setupState){
+                                        target.setupState[key] = val
+                                    }else{
+                                        // 还有 porps等
+                                        target[key] = val
+                                    }
+                                }
+                            })
+
+                            // 2.2、 用户直接编写 render
+                            const el = options.render.call(proxy)
+                            // 3、追加到宿主
+                            parent.innerHTML = ''
+                            parent.appendChild(el)
+                        },
+                        compile(template){
+                            // 返回一个 render 函数
+                            // parse -> ast
+                            // ast -> render
+                            return function render(){
+                                const h3 = document.createElement('h3')
+                                h3.textContent = this.title
+                                return h3
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        createApp(options){
+            const renderer = Vue.createRenderer({
+                querySelector(sel){
+                    return document.querySelector(sel)
+                },
+                insert(el,parent){
+                    parent.appendChild(el)
+                }
+            })
+            return renderer.createApp(options)
+        }
+    }
+</script>
+
+<script>
+    const app = Vue.createApp({
+        data(){
+            return {
+                title: 'Hello vue3'
+            }
+        },
+        setup(){
+            return {
+                title: 'vue3 Hello'
+            }
+        }
+    })
+    // 挂载
+    app.mount("#app")
+</script>

@@ -1,0 +1,44 @@
+<div id="app">
+    {{title}}
+    <comp v-model="foo"></comp>
+    <comp :value="foo" @update:value="foo = $event"></comp>
+    <input>
+</div>
+
+<script src="http://unpkg.com/vue@next"></script>
+
+<script>
+    // app实例创建
+    // vue2 new Vue
+    // vue3 动机：1、ts（类型支持）；消灭 this 指向(vue3 使用函数式)
+    //            2、 tree—shaking 
+    //            3、 复用性 、 可读性、 可维护性
+    //            4、API 简化 v-model.sync 
+    const app = Vue.createApp({
+        data(){
+            return {
+                title: 'Hello vue3'
+            }
+        },
+        setup() {
+            return useTitle
+        }
+    })
+
+    function useTitle(){
+        // 消灭 this
+        const state = Vue.reactive({
+            // 优先选择这里的 title，而非上面的 data里的
+            title: 'vue3,hello'
+        })
+        setTimeout(() =>{
+            state.title = 'new Title'
+        })
+        return state
+    }
+    app.component('comp',{
+        template: ''
+    })
+    // 挂载
+    app.mount("#app")
+</script>
